@@ -180,6 +180,7 @@ input, select, textarea {
   transition: all 0.3s ease;
   min-width: 150px;
   background: white;
+  color: #333;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -296,6 +297,13 @@ button:contains("Delete"), button[onclick*="Delete"] {
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   min-width: 300px;
+}
+
+.auth-form input {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #333 !important;
+  background: white !important;
 }
 
 /* Dashboard Analytics */
