@@ -17,7 +17,8 @@ import Quagga from 'quagga';
 ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_URL || '${API_URL}';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const DEMO_MODE = !API_URL.includes('localhost') || import.meta.env.VITE_DEMO_MODE === 'true';
 
 function App() {
   // Auth state
@@ -75,6 +76,28 @@ function App() {
   // Fetch products
   const fetchProducts = () => {
     setLoading(true);
+    
+    if (DEMO_MODE) {
+      // Demo data
+      setTimeout(() => {
+        const demoProducts = [
+          { id: 1, name: 'Laptop Computer', quantity: 25, price: 999.99, category: 'Electronics' },
+          { id: 2, name: 'Office Chair', quantity: 8, category: 'Furniture' },
+          { id: 3, name: 'Wireless Mouse', quantity: 45, category: 'Electronics' },
+          { id: 4, name: 'Desk Lamp', quantity: 12, category: 'Furniture' },
+          { id: 5, name: 'USB Cable', quantity: 5, category: 'Electronics' }, // Low stock
+          { id: 6, name: 'Monitor Stand', quantity: 15, category: 'Accessories' },
+          { id: 7, name: 'Keyboard', quantity: 3, category: 'Electronics' }, // Low stock
+        ];
+        setProducts(demoProducts);
+        const map = {};
+        demoProducts.forEach(p => { map[p.id] = p.name; });
+        setProductMap(map);
+        setLoading(false);
+      }, 500);
+      return;
+    }
+    
     fetch(`${API_URL}/api/products`)
       .then(res => res.json())
       .then(data => {
@@ -90,6 +113,21 @@ function App() {
   // Fetch orders
   const fetchOrders = () => {
     setLoading(true);
+    
+    if (DEMO_MODE) {
+      setTimeout(() => {
+        const demoOrders = [
+          { id: 1, product_id: 1, quantity: 2, created_at: '2025-06-26T10:00:00Z' },
+          { id: 2, product_id: 3, quantity: 10, created_at: '2025-06-26T09:30:00Z' },
+          { id: 3, product_id: 2, quantity: 1, created_at: '2025-06-25T14:20:00Z' },
+          { id: 4, product_id: 4, quantity: 3, created_at: '2025-06-25T11:15:00Z' },
+        ];
+        setOrders(demoOrders);
+        setLoading(false);
+      }, 500);
+      return;
+    }
+    
     fetch(`${API_URL}/api/orders`)
       .then(res => res.json())
       .then(data => { setOrders(data); setLoading(false); })
@@ -116,7 +154,19 @@ function App() {
   };
 
   const fetchCustomers = () => {
-    fetch('${API_URL}/api/customers')
+    if (DEMO_MODE) {
+      setTimeout(() => {
+        const demoCustomers = [
+          { id: 1, name: 'Acme Corp', email: 'contact@acme.com', phone: '555-0123', address: '123 Business Ave', city: 'New York', state: 'NY', customer_type: 'business' },
+          { id: 2, name: 'Tech Solutions Inc', email: 'info@techsol.com', phone: '555-0456', address: '456 Innovation Blvd', city: 'San Francisco', state: 'CA', customer_type: 'business' },
+          { id: 3, name: 'Global Enterprises', email: 'sales@global.com', phone: '555-0789', address: '789 Commerce St', city: 'Chicago', state: 'IL', customer_type: 'enterprise' },
+        ];
+        setCustomers(demoCustomers);
+      }, 500);
+      return;
+    }
+    
+    fetch(`${API_URL}/api/customers`)
       .then(res => res.json())
       .then(setCustomers)
       .catch(() => setError('Failed to load customers'));
@@ -371,6 +421,41 @@ function App() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // Demo mode authentication
+    if (DEMO_MODE) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+        
+        if (authMode === 'login') {
+          // Demo credentials
+          if (authForm.username === 'admin' && authForm.password === 'admin') {
+            setToken('demo-token');
+            setRole('admin');
+            localStorage.setItem('token', 'demo-token');
+            localStorage.setItem('role', 'admin');
+          } else if (authForm.username === 'demo' && authForm.password === 'demo') {
+            setToken('demo-token');
+            setRole('user');
+            localStorage.setItem('token', 'demo-token');
+            localStorage.setItem('role', 'user');
+          } else {
+            throw new Error('Invalid credentials. Use admin/admin or demo/demo');
+          }
+        } else {
+          // Demo registration
+          setAuthMode('login');
+          setError('Demo account created! Now login with admin/admin');
+        }
+        setAuthForm({ username: '', password: '', role: 'user' });
+      } catch (err) {
+        setError(err.message);
+      }
+      setLoading(false);
+      return;
+    }
+    
+    // Original backend authentication
     try {
       const res = await fetch(`${API_URL}/api/${authMode}`, {
         method: 'POST',
@@ -1230,6 +1315,20 @@ function App() {
     return (
       <div className="auth-container">
         <h2>{authMode === 'login' ? 'Login' : 'Register'}</h2>
+        {DEMO_MODE && (
+          <div style={{ 
+            background: 'rgba(255,255,255,0.9)', 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            marginBottom: '1rem',
+            color: '#0047AB',
+            textAlign: 'center'
+          }}>
+            <strong>🎬 Demo Mode</strong><br/>
+            Use: <strong>admin</strong> / <strong>admin</strong><br/>
+            Or: <strong>demo</strong> / <strong>demo</strong>
+          </div>
+        )}
         <form onSubmit={handleAuth} className="auth-form">
           <input
             type="text"
